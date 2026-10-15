@@ -1,0 +1,32 @@
+package com.taskboard.backend.task;
+
+import java.time.OffsetDateTime;
+import java.util.List;
+
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.RowMapper;
+import org.springframework.stereotype.Repository;
+
+@Repository
+public class TaskRepository {
+
+	private static final RowMapper<Task> TASK_ROW_MAPPER = (rs, rowNum) -> new Task(
+			rs.getLong("id"),
+			rs.getString("title"),
+			rs.getString("description"),
+			rs.getBoolean("done"),
+			rs.getObject("created_at", OffsetDateTime.class));
+
+	private final JdbcTemplate jdbcTemplate;
+
+	public TaskRepository(JdbcTemplate jdbcTemplate) {
+		this.jdbcTemplate = jdbcTemplate;
+	}
+
+	public List<Task> findAll() {
+		return jdbcTemplate.query(
+				"select id, title, description, done, created_at from tasks order by created_at",
+				TASK_ROW_MAPPER);
+	}
+
+}
