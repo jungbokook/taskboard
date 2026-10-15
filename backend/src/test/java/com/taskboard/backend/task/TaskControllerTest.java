@@ -2,8 +2,11 @@ package com.taskboard.backend.task;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -14,6 +17,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -53,6 +57,37 @@ class TaskControllerTest {
 		mockMvc.perform(get("/api/tasks"))
 			.andExpect(status().isOk())
 			.andExpect(jsonPath("$.length()").value(0));
+	}
+
+	@Test
+	void createReturnsCreatedTask() throws Exception {
+		Task created = new Task(1L, "새 할 일", "설명", false, OffsetDateTime.parse("2026-10-16T09:00:00+09:00"));
+		given(jdbcTemplate.queryForObject(anyString(), any(RowMapper.class), eq("새 할 일"), eq("설명")))
+			.willReturn(created);
+
+		mockMvc.perform(post("/api/tasks")
+				.contentType(MediaType.APPLICATION_JSON)
+				.content("""
+						{"title": "새 할 일", "description": "설명"}
+						"""))
+			.andExpect(status().isCreated())
+			.andExpect(jsonPath("$.id").value(1))
+			.andExpect(jsonPath("$.title").value("새 할 일"))
+			.andExpect(jsonPath("$.description").value("설명"))
+			.andExpect(jsonPath("$.done").value(false))
+			.andExpect(jsonPath("$.createdAt").exists());
+	}
+
+	@Test
+	void createReturnsBadRequestWhenTitleIsBlank() throws Exception {
+		mockMvc.perform(post("/api/tasks")
+				.contentType(MediaType.APPLICATION_JSON)
+				.content("""
+						{"title": "   "}
+						"""))
+			.andExpect(status().isBadRequest());
+
+		verifyNoInteractions(jdbcTemplate);
 	}
 
 }

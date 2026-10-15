@@ -29,4 +29,10 @@ public class TaskRepository {
 				TASK_ROW_MAPPER);
 	}
 
+	public Task create(String title, String description) {
+		return jdbcTemplate.queryForObject(
+				"insert into tasks (title, description) values (?, ?) returning id, title, description, done, created_at",
+				TASK_ROW_MAPPER, title, description);
+	}
+
 }
