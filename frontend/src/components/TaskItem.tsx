@@ -86,6 +86,7 @@ function TaskItem({ task, onUpdated, onDeleted }: TaskItemProps) {
       ) : (
         <>
           {task.title}
+          {task.dueDate && <span>마감 {task.dueDate}</span>}
           <button type="button" onClick={handleEditStart} disabled={submitting}>
             수정
           </button>

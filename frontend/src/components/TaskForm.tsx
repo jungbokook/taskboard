@@ -7,6 +7,7 @@ type TaskFormProps = {
 
 function TaskForm({ onCreated }: TaskFormProps) {
   const [title, setTitle] = useState('')
+  const [dueDate, setDueDate] = useState('')
   const [error, setError] = useState(false)
   const [submitting, setSubmitting] = useState(false)
 
@@ -17,9 +18,13 @@ function TaskForm({ onCreated }: TaskFormProps) {
 
     setSubmitting(true)
     try {
-      const task = await createTask({ title: trimmed })
+      const task = await createTask({
+        title: trimmed,
+        dueDate: dueDate === '' ? null : dueDate,
+      })
       onCreated(task)
       setTitle('')
+      setDueDate('')
       setError(false)
     } catch {
       setError(true)
@@ -35,6 +40,11 @@ function TaskForm({ onCreated }: TaskFormProps) {
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           placeholder="할 일 제목"
+        />
+        <input
+          type="date"
+          value={dueDate}
+          onChange={(e) => setDueDate(e.target.value)}
         />
         <button type="submit" disabled={submitting}>
           추가
