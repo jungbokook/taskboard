@@ -31,7 +31,8 @@ public class TaskController {
 		if (request.title() == null || request.title().isBlank()) {
 			return ResponseEntity.badRequest().build();
 		}
-		Task task = taskRepository.create(request.title(), request.description(), request.dueDate());
+		Priority priority = request.priority() != null ? request.priority() : Priority.MEDIUM;
+		Task task = taskRepository.create(request.title(), request.description(), request.dueDate(), priority);
 		return ResponseEntity.status(HttpStatus.CREATED).body(task);
 	}
 
@@ -40,7 +41,8 @@ public class TaskController {
 		if (request.title() != null && request.title().isBlank()) {
 			return ResponseEntity.badRequest().build();
 		}
-		return taskRepository.update(id, request.title(), request.description(), request.done(), request.dueDate())
+		return taskRepository
+			.update(id, request.title(), request.description(), request.done(), request.dueDate(), request.priority())
 			.map(ResponseEntity::ok)
 			.orElseGet(() -> ResponseEntity.notFound().build());
 	}

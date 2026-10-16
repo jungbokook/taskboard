@@ -43,8 +43,9 @@ class TaskControllerTest {
 	void findAllReturnsTasks() throws Exception {
 		List<Task> tasks = List.of(
 				new Task(1L, "첫 할 일", "설명", false, OffsetDateTime.parse("2026-10-16T09:00:00+09:00"),
-						LocalDate.of(2026, 10, 20)),
-				new Task(2L, "두 번째 할 일", null, true, OffsetDateTime.parse("2026-10-16T10:00:00+09:00"), null));
+						LocalDate.of(2026, 10, 20), Priority.HIGH),
+				new Task(2L, "두 번째 할 일", null, true, OffsetDateTime.parse("2026-10-16T10:00:00+09:00"), null,
+						Priority.MEDIUM));
 		given(jdbcTemplate.query(anyString(), any(RowMapper.class))).willReturn(tasks);
 
 		mockMvc.perform(get("/api/tasks"))
@@ -54,9 +55,11 @@ class TaskControllerTest {
 			.andExpect(jsonPath("$[0].title").value("첫 할 일"))
 			.andExpect(jsonPath("$[0].done").value(false))
 			.andExpect(jsonPath("$[0].dueDate").value("2026-10-20"))
+			.andExpect(jsonPath("$[0].priority").value("HIGH"))
 			.andExpect(jsonPath("$[1].id").value(2))
 			.andExpect(jsonPath("$[1].done").value(true))
-			.andExpect(jsonPath("$[1].dueDate").value(nullValue()));
+			.andExpect(jsonPath("$[1].dueDate").value(nullValue()))
+			.andExpect(jsonPath("$[1].priority").value("MEDIUM"));
 	}
 
 	@Test
@@ -70,8 +73,10 @@ class TaskControllerTest {
 
 	@Test
 	void createReturnsCreatedTask() throws Exception {
-		Task created = new Task(1L, "새 할 일", "설명", false, OffsetDateTime.parse("2026-10-16T09:00:00+09:00"), null);
-		given(jdbcTemplate.queryForObject(anyString(), any(RowMapper.class), eq("새 할 일"), eq("설명"), isNull()))
+		Task created = new Task(1L, "새 할 일", "설명", false, OffsetDateTime.parse("2026-10-16T09:00:00+09:00"), null,
+				Priority.MEDIUM);
+		given(jdbcTemplate.queryForObject(anyString(), any(RowMapper.class), eq("새 할 일"), eq("설명"), isNull(),
+				eq("MEDIUM")))
 			.willReturn(created);
 
 		mockMvc.perform(post("/api/tasks")
@@ -90,9 +95,9 @@ class TaskControllerTest {
 	@Test
 	void createWithDueDateReturnsDueDate() throws Exception {
 		Task created = new Task(1L, "보고서 제출", null, false, OffsetDateTime.parse("2026-10-16T09:00:00+09:00"),
-				LocalDate.of(2026, 10, 20));
+				LocalDate.of(2026, 10, 20), Priority.MEDIUM);
 		given(jdbcTemplate.queryForObject(anyString(), any(RowMapper.class), eq("보고서 제출"), isNull(),
-				eq(LocalDate.of(2026, 10, 20))))
+				eq(LocalDate.of(2026, 10, 20)), eq("MEDIUM")))
 			.willReturn(created);
 
 		mockMvc.perform(post("/api/tasks")
@@ -107,8 +112,10 @@ class TaskControllerTest {
 
 	@Test
 	void createWithoutDueDateReturnsNullDueDate() throws Exception {
-		Task created = new Task(1L, "새 할 일", null, false, OffsetDateTime.parse("2026-10-16T09:00:00+09:00"), null);
-		given(jdbcTemplate.queryForObject(anyString(), any(RowMapper.class), eq("새 할 일"), isNull(), isNull()))
+		Task created = new Task(1L, "새 할 일", null, false, OffsetDateTime.parse("2026-10-16T09:00:00+09:00"), null,
+				Priority.MEDIUM);
+		given(jdbcTemplate.queryForObject(anyString(), any(RowMapper.class), eq("새 할 일"), isNull(), isNull(),
+				eq("MEDIUM")))
 			.willReturn(created);
 
 		mockMvc.perform(post("/api/tasks")
@@ -133,6 +140,64 @@ class TaskControllerTest {
 	}
 
 	@Test
+	void createWithPriorityReturnsPriority() throws Exception {
+		Task created = new Task(1L, "급한 일", null, false, OffsetDateTime.parse("2026-10-16T09:00:00+09:00"), null,
+				Priority.HIGH);
+		given(jdbcTemplate.queryForObject(anyString(), any(RowMapper.class), eq("급한 일"), isNull(), isNull(),
+				eq("HIGH")))
+			.willReturn(created);
+
+		mockMvc.perform(post("/api/tasks")
+				.contentType(MediaType.APPLICATION_JSON)
+				.content("""
+						{"title": "급한 일", "priority": "HIGH"}
+						"""))
+			.andExpect(status().isCreated())
+			.andExpect(jsonPath("$.priority").value("HIGH"));
+	}
+
+	@Test
+	void createWithoutPriorityUsesMedium() throws Exception {
+		Task created = new Task(1L, "새 할 일", null, false, OffsetDateTime.parse("2026-10-16T09:00:00+09:00"), null,
+				Priority.MEDIUM);
+		given(jdbcTemplate.queryForObject(anyString(), any(RowMapper.class), eq("새 할 일"), isNull(), isNull(),
+				eq("MEDIUM")))
+			.willReturn(created);
+
+		mockMvc.perform(post("/api/tasks")
+				.contentType(MediaType.APPLICATION_JSON)
+				.content("""
+						{"title": "새 할 일", "priority": null}
+						"""))
+			.andExpect(status().isCreated())
+			.andExpect(jsonPath("$.priority").value("MEDIUM"));
+	}
+
+	@Test
+	void createReturnsBadRequestWhenPriorityInvalid() throws Exception {
+		mockMvc.perform(post("/api/tasks")
+				.contentType(MediaType.APPLICATION_JSON)
+				.content("""
+						{"title": "새 할 일", "priority": "URGENT"}
+						"""))
+			.andExpect(status().isBadRequest());
+
+		verifyNoInteractions(jdbcTemplate);
+	}
+
+	@Test
+	void createReturnsBadRequestWhenPriorityIsLowerCase() throws Exception {
+		mockMvc.perform(post("/api/tasks")
+				.contentType(MediaType.APPLICATION_JSON)
+				.content("""
+						{"title": "새 할 일", "priority": "high"}
+						"""))
+			.andExpect(status().isBadRequest());
+
+		verifyNoInteractions(jdbcTemplate);
+	}
+
+	@Test
 	void createReturnsBadRequestWhenTitleIsBlank() throws Exception {
 		mockMvc.perform(post("/api/tasks")
 				.contentType(MediaType.APPLICATION_JSON)
@@ -147,9 +212,9 @@ class TaskControllerTest {
 	@Test
 	void updateChangesOnlyGivenFields() throws Exception {
 		Task updated = new Task(1L, "수정된 제목", "원래 설명", false, OffsetDateTime.parse("2026-10-16T09:00:00+09:00"),
-				null);
+				null, Priority.MEDIUM);
 		given(jdbcTemplate.query(anyString(), any(RowMapper.class), eq("수정된 제목"), isNull(), isNull(), isNull(),
-				eq(1L)))
+				isNull(), eq(1L)))
 			.willReturn(List.of(updated));
 
 		mockMvc.perform(patch("/api/tasks/1")
@@ -168,9 +233,9 @@ class TaskControllerTest {
 	@Test
 	void updateChangesDueDate() throws Exception {
 		Task updated = new Task(1L, "할 일", null, false, OffsetDateTime.parse("2026-10-16T09:00:00+09:00"),
-				LocalDate.of(2026, 11, 1));
+				LocalDate.of(2026, 11, 1), Priority.MEDIUM);
 		given(jdbcTemplate.query(anyString(), any(RowMapper.class), isNull(), isNull(), isNull(),
-				eq(LocalDate.of(2026, 11, 1)), eq(1L)))
+				eq(LocalDate.of(2026, 11, 1)), isNull(), eq(1L)))
 			.willReturn(List.of(updated));
 
 		mockMvc.perform(patch("/api/tasks/1")
@@ -184,8 +249,39 @@ class TaskControllerTest {
 	}
 
 	@Test
+	void updateChangesPriority() throws Exception {
+		Task updated = new Task(1L, "할 일", null, false, OffsetDateTime.parse("2026-10-16T09:00:00+09:00"), null,
+				Priority.LOW);
+		given(jdbcTemplate.query(anyString(), any(RowMapper.class), isNull(), isNull(), isNull(), isNull(), eq("LOW"),
+				eq(1L)))
+			.willReturn(List.of(updated));
+
+		mockMvc.perform(patch("/api/tasks/1")
+				.contentType(MediaType.APPLICATION_JSON)
+				.content("""
+						{"priority": "LOW"}
+						"""))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.id").value(1))
+			.andExpect(jsonPath("$.priority").value("LOW"));
+	}
+
+	@Test
+	void updateReturnsBadRequestWhenPriorityInvalid() throws Exception {
+		mockMvc.perform(patch("/api/tasks/1")
+				.contentType(MediaType.APPLICATION_JSON)
+				.content("""
+						{"priority": "URGENT"}
+						"""))
+			.andExpect(status().isBadRequest());
+
+		verifyNoInteractions(jdbcTemplate);
+	}
+
+	@Test
 	void updateReturnsNotFoundWhenTaskMissing() throws Exception {
-		given(jdbcTemplate.query(anyString(), any(RowMapper.class), isNull(), isNull(), eq(true), isNull(), eq(99L)))
+		given(jdbcTemplate.query(anyString(), any(RowMapper.class), isNull(), isNull(), eq(true), isNull(), isNull(),
+				eq(99L)))
 			.willReturn(List.of());
 
 		mockMvc.perform(patch("/api/tasks/99")
