@@ -1,3 +1,5 @@
+export type Priority = 'LOW' | 'MEDIUM' | 'HIGH'
+
 export type Task = {
   id: number
   title: string
@@ -5,12 +7,14 @@ export type Task = {
   done: boolean
   createdAt: string
   dueDate: string | null
+  priority: Priority
 }
 
 export type CreateTaskInput = {
   title: string
   description?: string | null
   dueDate?: string | null
+  priority?: Priority | null
 }
 
 export type UpdateTaskInput = {
@@ -18,6 +22,7 @@ export type UpdateTaskInput = {
   description?: string | null
   done?: boolean
   dueDate?: string | null
+  priority?: Priority | null
 }
 
 function checkOk(res: Response): Response {
