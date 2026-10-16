@@ -50,4 +50,8 @@ public class TaskRepository {
 			.findFirst();
 	}
 
+	public boolean delete(long id) {
+		return jdbcTemplate.update("delete from tasks where id = ?", id) > 0;
+	}
+
 }

@@ -6,9 +6,11 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verifyNoInteractions;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -134,6 +136,23 @@ class TaskControllerTest {
 			.andExpect(status().isBadRequest());
 
 		verifyNoInteractions(jdbcTemplate);
+	}
+
+	@Test
+	void deleteReturnsNoContentWhenTaskDeleted() throws Exception {
+		given(jdbcTemplate.update(anyString(), eq(1L))).willReturn(1);
+
+		mockMvc.perform(delete("/api/tasks/1"))
+			.andExpect(status().isNoContent())
+			.andExpect(content().string(""));
+	}
+
+	@Test
+	void deleteReturnsNotFoundWhenTaskMissing() throws Exception {
+		given(jdbcTemplate.update(anyString(), eq(99L))).willReturn(0);
+
+		mockMvc.perform(delete("/api/tasks/99"))
+			.andExpect(status().isNotFound());
 	}
 
 }

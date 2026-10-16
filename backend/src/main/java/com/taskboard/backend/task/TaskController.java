@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -42,6 +43,14 @@ public class TaskController {
 		return taskRepository.update(id, request.title(), request.description(), request.done())
 			.map(ResponseEntity::ok)
 			.orElseGet(() -> ResponseEntity.notFound().build());
+	}
+
+	@DeleteMapping("/api/tasks/{id}")
+	public ResponseEntity<Void> delete(@PathVariable long id) {
+		if (taskRepository.delete(id)) {
+			return ResponseEntity.noContent().build();
+		}
+		return ResponseEntity.notFound().build();
 	}
 
 }
