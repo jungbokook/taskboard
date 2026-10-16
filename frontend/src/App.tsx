@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { fetchTasks, type Task } from './api/tasks'
+import { fetchTasks, type Task, type TaskQuery } from './api/tasks'
+import TaskFilter from './components/TaskFilter'
 import TaskForm from './components/TaskForm'
 import TaskList from './components/TaskList'
 
@@ -8,6 +9,7 @@ function App() {
   const [database, setDatabase] = useState<string | null>(null)
   const [tasks, setTasks] = useState<Task[] | null>(null)
   const [loadError, setLoadError] = useState(false)
+  const [query, setQuery] = useState<TaskQuery>({})
 
   useEffect(() => {
     let ignore = false
@@ -32,7 +34,7 @@ function App() {
 
   useEffect(() => {
     let ignore = false
-    fetchTasks()
+    fetchTasks(query)
       .then((data) => {
         if (!ignore) setTasks(data)
       })
@@ -42,7 +44,13 @@ function App() {
     return () => {
       ignore = true
     }
-  }, [])
+  }, [query])
+
+  function handleQueryChange(next: TaskQuery) {
+    setQuery(next)
+    setTasks(null)
+    setLoadError(false)
+  }
 
   function handleCreated(task: Task) {
     setTasks((prev) => (prev === null ? [task] : [...prev, task]))
@@ -62,6 +70,7 @@ function App() {
       <p>{status ?? '확인 중...'}</p>
       {database && <p>{database}</p>}
       <TaskForm onCreated={handleCreated} />
+      <TaskFilter query={query} onChange={handleQueryChange} />
       <TaskList
         tasks={tasks}
         loadError={loadError}

@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -22,8 +23,13 @@ public class TaskController {
 	}
 
 	@GetMapping("/api/tasks")
-	public List<Task> findAll() {
-		return taskRepository.findAll();
+	public ResponseEntity<List<Task>> findAll(@RequestParam(required = false) String done,
+			@RequestParam(required = false) Priority priority) {
+		if (done != null && !done.equals("true") && !done.equals("false")) {
+			return ResponseEntity.badRequest().build();
+		}
+		Boolean doneFilter = done == null ? null : Boolean.valueOf(done);
+		return ResponseEntity.ok(taskRepository.findAll(doneFilter, priority));
 	}
 
 	@PostMapping("/api/tasks")
