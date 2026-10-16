@@ -2,6 +2,7 @@ package com.taskboard.backend.task;
 
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -27,10 +28,22 @@ public class TaskRepository {
 		this.jdbcTemplate = jdbcTemplate;
 	}
 
-	public List<Task> findAll() {
+	public List<Task> findAll(Boolean done, Priority priority) {
+		List<String> conditions = new ArrayList<>();
+		List<Object> args = new ArrayList<>();
+		if (done != null) {
+			conditions.add("done = ?");
+			args.add(done);
+		}
+		if (priority != null) {
+			conditions.add("priority = ?");
+			args.add(priority.name());
+		}
+		String where = conditions.isEmpty() ? "" : " where " + String.join(" and ", conditions);
 		return jdbcTemplate.query(
-				"select id, title, description, done, created_at, due_date, priority from tasks order by created_at",
-				TASK_ROW_MAPPER);
+				"select id, title, description, done, created_at, due_date, priority from tasks" + where
+						+ " order by created_at",
+				TASK_ROW_MAPPER, args.toArray());
 	}
 
 	public Task create(String title, String description, LocalDate dueDate, Priority priority) {

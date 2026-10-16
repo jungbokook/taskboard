@@ -3,6 +3,7 @@ package com.taskboard.backend.task;
 import static org.hamcrest.Matchers.nullValue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.contains;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.BDDMockito.given;
@@ -46,7 +47,7 @@ class TaskControllerTest {
 						LocalDate.of(2026, 10, 20), Priority.HIGH),
 				new Task(2L, "두 번째 할 일", null, true, OffsetDateTime.parse("2026-10-16T10:00:00+09:00"), null,
 						Priority.MEDIUM));
-		given(jdbcTemplate.query(anyString(), any(RowMapper.class))).willReturn(tasks);
+		given(jdbcTemplate.query(anyString(), any(RowMapper.class), any(Object[].class))).willReturn(tasks);
 
 		mockMvc.perform(get("/api/tasks"))
 			.andExpect(status().isOk())
@@ -64,11 +65,79 @@ class TaskControllerTest {
 
 	@Test
 	void findAllReturnsEmptyListWhenNoTasks() throws Exception {
-		given(jdbcTemplate.query(anyString(), any(RowMapper.class))).willReturn(List.of());
+		given(jdbcTemplate.query(anyString(), any(RowMapper.class), any(Object[].class))).willReturn(List.of());
 
 		mockMvc.perform(get("/api/tasks"))
 			.andExpect(status().isOk())
 			.andExpect(jsonPath("$.length()").value(0));
+	}
+
+	@Test
+	void findAllFiltersByDone() throws Exception {
+		Task task = new Task(2L, "끝난 일", null, true, OffsetDateTime.parse("2026-10-16T10:00:00+09:00"), null,
+				Priority.MEDIUM);
+		given(jdbcTemplate.query(contains("where done = ?"), any(RowMapper.class), eq(true)))
+			.willReturn(List.of(task));
+
+		mockMvc.perform(get("/api/tasks").param("done", "true"))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.length()").value(1))
+			.andExpect(jsonPath("$[0].id").value(2))
+			.andExpect(jsonPath("$[0].done").value(true));
+	}
+
+	@Test
+	void findAllFiltersByPriority() throws Exception {
+		Task task = new Task(1L, "급한 일", null, false, OffsetDateTime.parse("2026-10-16T09:00:00+09:00"), null,
+				Priority.HIGH);
+		given(jdbcTemplate.query(contains("where priority = ?"), any(RowMapper.class), eq("HIGH")))
+			.willReturn(List.of(task));
+
+		mockMvc.perform(get("/api/tasks").param("priority", "HIGH"))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.length()").value(1))
+			.andExpect(jsonPath("$[0].id").value(1))
+			.andExpect(jsonPath("$[0].priority").value("HIGH"));
+	}
+
+	@Test
+	void findAllFiltersByDoneAndPriority() throws Exception {
+		Task task = new Task(3L, "나중에 할 일", null, false, OffsetDateTime.parse("2026-10-16T11:00:00+09:00"), null,
+				Priority.LOW);
+		given(jdbcTemplate.query(contains("where done = ? and priority = ?"), any(RowMapper.class), eq(false),
+				eq("LOW")))
+			.willReturn(List.of(task));
+
+		mockMvc.perform(get("/api/tasks").param("done", "false").param("priority", "LOW"))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.length()").value(1))
+			.andExpect(jsonPath("$[0].id").value(3))
+			.andExpect(jsonPath("$[0].done").value(false))
+			.andExpect(jsonPath("$[0].priority").value("LOW"));
+	}
+
+	@Test
+	void findAllReturnsBadRequestWhenDoneInvalid() throws Exception {
+		mockMvc.perform(get("/api/tasks").param("done", "yes"))
+			.andExpect(status().isBadRequest());
+
+		verifyNoInteractions(jdbcTemplate);
+	}
+
+	@Test
+	void findAllReturnsBadRequestWhenPriorityInvalid() throws Exception {
+		mockMvc.perform(get("/api/tasks").param("priority", "URGENT"))
+			.andExpect(status().isBadRequest());
+
+		verifyNoInteractions(jdbcTemplate);
+	}
+
+	@Test
+	void findAllReturnsBadRequestWhenPriorityIsLowerCase() throws Exception {
+		mockMvc.perform(get("/api/tasks").param("priority", "high"))
+			.andExpect(status().isBadRequest());
+
+		verifyNoInteractions(jdbcTemplate);
 	}
 
 	@Test
