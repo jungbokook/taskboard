@@ -3,9 +3,11 @@ package com.taskboard.backend.task;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -81,6 +83,50 @@ class TaskControllerTest {
 	@Test
 	void createReturnsBadRequestWhenTitleIsBlank() throws Exception {
 		mockMvc.perform(post("/api/tasks")
+				.contentType(MediaType.APPLICATION_JSON)
+				.content("""
+						{"title": "   "}
+						"""))
+			.andExpect(status().isBadRequest());
+
+		verifyNoInteractions(jdbcTemplate);
+	}
+
+	@Test
+	void updateChangesOnlyGivenFields() throws Exception {
+		Task updated = new Task(1L, "수정된 제목", "원래 설명", false, OffsetDateTime.parse("2026-10-16T09:00:00+09:00"));
+		given(jdbcTemplate.query(anyString(), any(RowMapper.class), eq("수정된 제목"), isNull(), isNull(), eq(1L)))
+			.willReturn(List.of(updated));
+
+		mockMvc.perform(patch("/api/tasks/1")
+				.contentType(MediaType.APPLICATION_JSON)
+				.content("""
+						{"title": "수정된 제목"}
+						"""))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.id").value(1))
+			.andExpect(jsonPath("$.title").value("수정된 제목"))
+			.andExpect(jsonPath("$.description").value("원래 설명"))
+			.andExpect(jsonPath("$.done").value(false))
+			.andExpect(jsonPath("$.createdAt").exists());
+	}
+
+	@Test
+	void updateReturnsNotFoundWhenTaskMissing() throws Exception {
+		given(jdbcTemplate.query(anyString(), any(RowMapper.class), isNull(), isNull(), eq(true), eq(99L)))
+			.willReturn(List.of());
+
+		mockMvc.perform(patch("/api/tasks/99")
+				.contentType(MediaType.APPLICATION_JSON)
+				.content("""
+						{"done": true}
+						"""))
+			.andExpect(status().isNotFound());
+	}
+
+	@Test
+	void updateReturnsBadRequestWhenTitleIsBlank() throws Exception {
+		mockMvc.perform(patch("/api/tasks/1")
 				.contentType(MediaType.APPLICATION_JSON)
 				.content("""
 						{"title": "   "}

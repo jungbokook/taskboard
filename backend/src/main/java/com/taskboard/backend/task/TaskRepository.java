@@ -2,6 +2,7 @@ package com.taskboard.backend.task;
 
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
@@ -33,6 +34,20 @@ public class TaskRepository {
 		return jdbcTemplate.queryForObject(
 				"insert into tasks (title, description) values (?, ?) returning id, title, description, done, created_at",
 				TASK_ROW_MAPPER, title, description);
+	}
+
+	public Optional<Task> update(long id, String title, String description, Boolean done) {
+		return jdbcTemplate.query(
+				"""
+						update tasks
+						   set title = coalesce(?, title),
+						       description = coalesce(?, description),
+						       done = coalesce(?, done)
+						 where id = ?
+						returning id, title, description, done, created_at""",
+				TASK_ROW_MAPPER, title, description, done, id)
+			.stream()
+			.findFirst();
 	}
 
 }
