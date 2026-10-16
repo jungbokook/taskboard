@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { fetchTasks, type Task } from './api/tasks'
+import TaskForm from './components/TaskForm'
 import TaskList from './components/TaskList'
 
 function App() {
@@ -43,11 +44,16 @@ function App() {
     }
   }, [])
 
+  function handleCreated(task: Task) {
+    setTasks((prev) => (prev === null ? [task] : [...prev, task]))
+  }
+
   return (
     <>
       <h1>Taskboard</h1>
       <p>{status ?? '확인 중...'}</p>
       {database && <p>{database}</p>}
+      <TaskForm onCreated={handleCreated} />
       <TaskList tasks={tasks} loadError={loadError} />
     </>
   )
