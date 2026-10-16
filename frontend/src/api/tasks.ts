@@ -25,13 +25,22 @@ export type UpdateTaskInput = {
   priority?: Priority | null
 }
 
+export type TaskQuery = {
+  done?: boolean
+  priority?: Priority
+}
+
 function checkOk(res: Response): Response {
   if (!res.ok) throw new Error(`HTTP ${res.status}`)
   return res
 }
 
-export async function fetchTasks(): Promise<Task[]> {
-  const res = checkOk(await fetch('/api/tasks'))
+export async function fetchTasks(query: TaskQuery = {}): Promise<Task[]> {
+  const params = new URLSearchParams()
+  if (query.done !== undefined) params.set('done', String(query.done))
+  if (query.priority !== undefined) params.set('priority', query.priority)
+  const qs = params.toString()
+  const res = checkOk(await fetch(qs === '' ? '/api/tasks' : `/api/tasks?${qs}`))
   return res.json()
 }
 
