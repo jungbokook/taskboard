@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { createTask, type Task } from '../api/tasks'
+import { createTask, type Priority, type Task } from '../api/tasks'
 
 type TaskFormProps = {
   onCreated: (task: Task) => void
@@ -8,6 +8,7 @@ type TaskFormProps = {
 function TaskForm({ onCreated }: TaskFormProps) {
   const [title, setTitle] = useState('')
   const [dueDate, setDueDate] = useState('')
+  const [priority, setPriority] = useState<Priority>('MEDIUM')
   const [error, setError] = useState(false)
   const [submitting, setSubmitting] = useState(false)
 
@@ -21,10 +22,12 @@ function TaskForm({ onCreated }: TaskFormProps) {
       const task = await createTask({
         title: trimmed,
         dueDate: dueDate === '' ? null : dueDate,
+        priority,
       })
       onCreated(task)
       setTitle('')
       setDueDate('')
+      setPriority('MEDIUM')
       setError(false)
     } catch {
       setError(true)
@@ -46,6 +49,14 @@ function TaskForm({ onCreated }: TaskFormProps) {
           value={dueDate}
           onChange={(e) => setDueDate(e.target.value)}
         />
+        <select
+          value={priority}
+          onChange={(e) => setPriority(e.target.value as Priority)}
+        >
+          <option value="LOW">LOW</option>
+          <option value="MEDIUM">MEDIUM</option>
+          <option value="HIGH">HIGH</option>
+        </select>
         <button type="submit" disabled={submitting}>
           추가
         </button>
