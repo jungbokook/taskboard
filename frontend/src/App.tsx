@@ -1,8 +1,13 @@
 import { useEffect, useState } from 'react'
+import { fetchTasks, type Task } from './api/tasks'
+import TaskForm from './components/TaskForm'
+import TaskList from './components/TaskList'
 
 function App() {
   const [status, setStatus] = useState<string | null>(null)
   const [database, setDatabase] = useState<string | null>(null)
+  const [tasks, setTasks] = useState<Task[] | null>(null)
+  const [loadError, setLoadError] = useState(false)
 
   useEffect(() => {
     let ignore = false
@@ -25,11 +30,44 @@ function App() {
     }
   }, [])
 
+  useEffect(() => {
+    let ignore = false
+    fetchTasks()
+      .then((data) => {
+        if (!ignore) setTasks(data)
+      })
+      .catch(() => {
+        if (!ignore) setLoadError(true)
+      })
+    return () => {
+      ignore = true
+    }
+  }, [])
+
+  function handleCreated(task: Task) {
+    setTasks((prev) => (prev === null ? [task] : [...prev, task]))
+  }
+
+  function handleUpdated(task: Task) {
+    setTasks((prev) => prev && prev.map((t) => (t.id === task.id ? task : t)))
+  }
+
+  function handleDeleted(id: number) {
+    setTasks((prev) => prev && prev.filter((t) => t.id !== id))
+  }
+
   return (
     <>
       <h1>Taskboard</h1>
       <p>{status ?? '확인 중...'}</p>
       {database && <p>{database}</p>}
+      <TaskForm onCreated={handleCreated} />
+      <TaskList
+        tasks={tasks}
+        loadError={loadError}
+        onUpdated={handleUpdated}
+        onDeleted={handleDeleted}
+      />
     </>
   )
 }
