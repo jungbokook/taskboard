@@ -4,17 +4,20 @@ export type Task = {
   description: string | null
   done: boolean
   createdAt: string
+  dueDate: string | null
 }
 
 export type CreateTaskInput = {
   title: string
   description?: string | null
+  dueDate?: string | null
 }
 
 export type UpdateTaskInput = {
   title?: string
   description?: string | null
   done?: boolean
+  dueDate?: string | null
 }
 
 function checkOk(res: Response): Response {

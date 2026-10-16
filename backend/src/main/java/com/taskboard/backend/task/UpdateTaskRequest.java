@@ -1,4 +1,6 @@
 package com.taskboard.backend.task;
 
-public record UpdateTaskRequest(String title, String description, Boolean done) {
+import java.time.LocalDate;
+
+public record UpdateTaskRequest(String title, String description, Boolean done, LocalDate dueDate) {
 }
