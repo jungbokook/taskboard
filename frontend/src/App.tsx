@@ -1,8 +1,12 @@
 import { useEffect, useState } from 'react'
+import { fetchTasks, type Task } from './api/tasks'
+import TaskList from './components/TaskList'
 
 function App() {
   const [status, setStatus] = useState<string | null>(null)
   const [database, setDatabase] = useState<string | null>(null)
+  const [tasks, setTasks] = useState<Task[] | null>(null)
+  const [loadError, setLoadError] = useState(false)
 
   useEffect(() => {
     let ignore = false
@@ -25,11 +29,26 @@ function App() {
     }
   }, [])
 
+  useEffect(() => {
+    let ignore = false
+    fetchTasks()
+      .then((data) => {
+        if (!ignore) setTasks(data)
+      })
+      .catch(() => {
+        if (!ignore) setLoadError(true)
+      })
+    return () => {
+      ignore = true
+    }
+  }, [])
+
   return (
     <>
       <h1>Taskboard</h1>
       <p>{status ?? '확인 중...'}</p>
       {database && <p>{database}</p>}
+      <TaskList tasks={tasks} loadError={loadError} />
     </>
   )
 }
