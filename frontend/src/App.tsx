@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { fetchTasks, type Task, type TaskQuery } from './api/tasks'
+import { errorMessage, fetchTasks, type Task, type TaskQuery } from './api/tasks'
 import TaskFilter from './components/TaskFilter'
 import TaskForm from './components/TaskForm'
 import TaskList from './components/TaskList'
@@ -8,7 +8,7 @@ function App() {
   const [status, setStatus] = useState<string | null>(null)
   const [database, setDatabase] = useState<string | null>(null)
   const [tasks, setTasks] = useState<Task[] | null>(null)
-  const [loadError, setLoadError] = useState(false)
+  const [loadError, setLoadError] = useState<string | null>(null)
   const [query, setQuery] = useState<TaskQuery>({})
 
   useEffect(() => {
@@ -38,8 +38,8 @@ function App() {
       .then((data) => {
         if (!ignore) setTasks(data)
       })
-      .catch(() => {
-        if (!ignore) setLoadError(true)
+      .catch((e) => {
+        if (!ignore) setLoadError(errorMessage(e, '목록을 불러오지 못했습니다'))
       })
     return () => {
       ignore = true
@@ -49,7 +49,7 @@ function App() {
   function handleQueryChange(next: TaskQuery) {
     setQuery(next)
     setTasks(null)
-    setLoadError(false)
+    setLoadError(null)
   }
 
   function handleCreated(task: Task) {

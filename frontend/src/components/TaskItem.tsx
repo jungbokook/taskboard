@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { deleteTask, updateTask, type Task } from '../api/tasks'
+import { deleteTask, errorMessage, updateTask, type Task } from '../api/tasks'
 
 type TaskItemProps = {
   task: Task
@@ -8,7 +8,7 @@ type TaskItemProps = {
 }
 
 function TaskItem({ task, onUpdated, onDeleted }: TaskItemProps) {
-  const [error, setError] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState('')
@@ -16,7 +16,7 @@ function TaskItem({ task, onUpdated, onDeleted }: TaskItemProps) {
   function handleEditStart() {
     setDraft(task.title)
     setEditing(true)
-    setError(false)
+    setError(null)
   }
 
   function handleEditCancel() {
@@ -32,9 +32,9 @@ function TaskItem({ task, onUpdated, onDeleted }: TaskItemProps) {
       const updated = await updateTask(task.id, { title: trimmed })
       onUpdated(updated)
       setEditing(false)
-      setError(false)
-    } catch {
-      setError(true)
+      setError(null)
+    } catch (e) {
+      setError(errorMessage(e, '처리하지 못했습니다'))
     } finally {
       setSubmitting(false)
     }
@@ -45,9 +45,9 @@ function TaskItem({ task, onUpdated, onDeleted }: TaskItemProps) {
     try {
       const updated = await updateTask(task.id, { done: !task.done })
       onUpdated(updated)
-      setError(false)
-    } catch {
-      setError(true)
+      setError(null)
+    } catch (e) {
+      setError(errorMessage(e, '처리하지 못했습니다'))
     } finally {
       setSubmitting(false)
     }
@@ -58,8 +58,8 @@ function TaskItem({ task, onUpdated, onDeleted }: TaskItemProps) {
     try {
       await deleteTask(task.id)
       onDeleted(task.id)
-    } catch {
-      setError(true)
+    } catch (e) {
+      setError(errorMessage(e, '처리하지 못했습니다'))
     } finally {
       setSubmitting(false)
     }
@@ -96,7 +96,7 @@ function TaskItem({ task, onUpdated, onDeleted }: TaskItemProps) {
       <button type="button" onClick={handleDelete} disabled={submitting}>
         삭제
       </button>
-      {error && <span>처리하지 못했습니다</span>}
+      {error && <span>{error}</span>}
     </li>
   )
 }
