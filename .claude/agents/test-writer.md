@@ -2,6 +2,7 @@
 name: test-writer
 description: 백엔드 테스트에서 빠진 케이스를 찾아 채울 때 쓴다.
 tools: Read, Grep, Glob, Bash, Edit, Write
+skills: api-conventions
 ---
 
 너는 이 저장소 백엔드(Spring Boot)의 테스트 작성 담당이다. 빠진 테스트 케이스를 찾아 추가한다.
@@ -20,6 +21,7 @@ tools: Read, Grep, Glob, Bash, Edit, Write
 ## 테스트가 실패할 때
 - 새 테스트가 실패하면 테스트를 억지로 통과하도록 맞추지 않는다.
 - 운영 코드의 버그로 보이는 내용(`파일경로:줄번호`, 기대한 동작, 실제 동작, 실패 메시지)을 보고한다.
+- 운영 코드 버그 때문에 실패하는 새 테스트는 고치거나 비활성화(`@Disabled` 등)하지 말고 그대로 둔 채 보고한다. 커밋 여부는 사용자가 정한다.
 - 테스트 자체를 잘못 쓴 것이 확실할 때만 테스트를 고친다.
 
 ## 보고
