@@ -67,7 +67,9 @@ function TaskItem({ task, onUpdated, onDeleted }: TaskItemProps) {
 
   return (
     <li>
+      <label htmlFor={`task-${task.id}-done`}>완료</label>
       <input
+        id={`task-${task.id}-done`}
         type="checkbox"
         checked={task.done}
         onChange={handleToggle}
@@ -75,7 +77,12 @@ function TaskItem({ task, onUpdated, onDeleted }: TaskItemProps) {
       />
       {editing ? (
         <>
-          <input value={draft} onChange={(e) => setDraft(e.target.value)} />
+          <label htmlFor={`task-${task.id}-title`}>제목</label>
+          <input
+            id={`task-${task.id}-title`}
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+          />
           <button type="button" onClick={handleEditSave} disabled={submitting}>
             저장
           </button>

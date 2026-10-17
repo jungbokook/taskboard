@@ -12,7 +12,9 @@ function TaskFilter({ query, onChange }: TaskFilterProps) {
 
   return (
     <div>
+      <label htmlFor="task-filter-done">상태</label>
       <select
+        id="task-filter-done"
         value={doneValue}
         onChange={(e) => {
           const value = e.target.value
@@ -23,7 +25,9 @@ function TaskFilter({ query, onChange }: TaskFilterProps) {
         <option value="false">미완료</option>
         <option value="true">완료</option>
       </select>
+      <label htmlFor="task-filter-priority">우선순위</label>
       <select
+        id="task-filter-priority"
         value={query.priority ?? ''}
         onChange={(e) => {
           const value = e.target.value
@@ -35,7 +39,9 @@ function TaskFilter({ query, onChange }: TaskFilterProps) {
         <option value="MEDIUM">MEDIUM</option>
         <option value="HIGH">HIGH</option>
       </select>
+      <label htmlFor="task-filter-q">검색</label>
       <input
+        id="task-filter-q"
         type="search"
         placeholder="제목 검색"
         value={text}
