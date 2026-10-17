@@ -11,3 +11,4 @@ dist/
 *.iml
 .DS_Store
 .playwright-mcp/
+.claude/worktrees/
