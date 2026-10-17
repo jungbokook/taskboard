@@ -6,14 +6,50 @@
       "Bash(./gradlew build *)",
       "Bash(npm run *)",
       "Bash(git check-ignore *)",
-      "Bash(curl -s -m 3 localhost:8080/api/health)"
+      "Bash(curl -s -m 3 localhost:8080/api/health)",
+      "mcp__neon__list_*",
+      "mcp__neon__get_*",
+      "mcp__neon__describe_*",
+      "mcp__neon__inspect_database",
+      "mcp__neon__compare_database_schema",
+      "mcp__neon__query_logs",
+      "mcp__neon__search",
+      "mcp__neon__fetch"
     ],
     "deny": [
       "Read(**/.env)",
-      "Edit(**/.env)"
+      "Edit(**/.env)",
+      "mcp__neon__delete_*",
+      "mcp__neon__create_*",
+      "mcp__neon__update_*",
+      "mcp__neon__add_*",
+      "mcp__neon__set_*",
+      "mcp__neon__enable_*",
+      "mcp__neon__disable_*",
+      "mcp__neon__provision_*",
+      "mcp__neon__deploy_*",
+      "mcp__neon__register_*",
+      "mcp__neon__reset_*",
+      "mcp__neon__restore_*",
+      "mcp__neon__finalize_*",
+      "mcp__neon__recover_*",
+      "mcp__neon__rotate_*",
+      "mcp__neon__revoke_*",
+      "mcp__neon__start_*",
+      "mcp__neon__suspend_*",
+      "mcp__neon__restart_*",
+      "mcp__neon__prepare_*",
+      "mcp__neon__complete_*"
     ],
     "ask": [
-      "Bash(git push *)"
+      "Bash(git push *)",
+      "mcp__neon__run_sql",
+      "mcp__neon__run_sql_transaction",
+      "mcp__neon__explain_sql_statement",
+      "mcp__neon__get_realtime_secret",
+      "mcp__neon__list_credentials",
+      "mcp__neon__presign_storage_object",
+      "mcp__neon__send_feedback"
     ]
   },
   "enabledPlugins": {
