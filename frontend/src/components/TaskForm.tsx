@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { createTask, type Priority, type Task } from '../api/tasks'
+import { createTask, errorMessage, type Priority, type Task } from '../api/tasks'
 
 type TaskFormProps = {
   onCreated: (task: Task) => void
@@ -9,7 +9,7 @@ function TaskForm({ onCreated }: TaskFormProps) {
   const [title, setTitle] = useState('')
   const [dueDate, setDueDate] = useState('')
   const [priority, setPriority] = useState<Priority>('MEDIUM')
-  const [error, setError] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
@@ -28,9 +28,9 @@ function TaskForm({ onCreated }: TaskFormProps) {
       setTitle('')
       setDueDate('')
       setPriority('MEDIUM')
-      setError(false)
-    } catch {
-      setError(true)
+      setError(null)
+    } catch (e) {
+      setError(errorMessage(e, '추가하지 못했습니다'))
     } finally {
       setSubmitting(false)
     }
@@ -61,7 +61,7 @@ function TaskForm({ onCreated }: TaskFormProps) {
           추가
         </button>
       </form>
-      {error && <p>추가하지 못했습니다</p>}
+      {error && <p>{error}</p>}
     </>
   )
 }

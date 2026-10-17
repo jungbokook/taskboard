@@ -24,6 +24,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
@@ -119,7 +120,8 @@ class TaskControllerTest {
 	@Test
 	void findAllReturnsBadRequestWhenDoneInvalid() throws Exception {
 		mockMvc.perform(get("/api/tasks").param("done", "yes"))
-			.andExpect(status().isBadRequest());
+			.andExpect(status().isBadRequest())
+			.andExpect(jsonPath("$.message").value("done 값은 true 또는 false여야 합니다"));
 
 		verifyNoInteractions(jdbcTemplate);
 	}
@@ -127,7 +129,8 @@ class TaskControllerTest {
 	@Test
 	void findAllReturnsBadRequestWhenPriorityInvalid() throws Exception {
 		mockMvc.perform(get("/api/tasks").param("priority", "URGENT"))
-			.andExpect(status().isBadRequest());
+			.andExpect(status().isBadRequest())
+			.andExpect(jsonPath("$.message").value("priority 값이 올바르지 않습니다"));
 
 		verifyNoInteractions(jdbcTemplate);
 	}
@@ -135,7 +138,8 @@ class TaskControllerTest {
 	@Test
 	void findAllReturnsBadRequestWhenPriorityIsLowerCase() throws Exception {
 		mockMvc.perform(get("/api/tasks").param("priority", "high"))
-			.andExpect(status().isBadRequest());
+			.andExpect(status().isBadRequest())
+			.andExpect(jsonPath("$.message").exists());
 
 		verifyNoInteractions(jdbcTemplate);
 	}
@@ -203,7 +207,8 @@ class TaskControllerTest {
 				.content("""
 						{"title": "새 할 일", "dueDate": "2026/10/20"}
 						"""))
-			.andExpect(status().isBadRequest());
+			.andExpect(status().isBadRequest())
+			.andExpect(jsonPath("$.message").exists());
 
 		verifyNoInteractions(jdbcTemplate);
 	}
@@ -249,7 +254,8 @@ class TaskControllerTest {
 				.content("""
 						{"title": "새 할 일", "priority": "URGENT"}
 						"""))
-			.andExpect(status().isBadRequest());
+			.andExpect(status().isBadRequest())
+			.andExpect(jsonPath("$.message").exists());
 
 		verifyNoInteractions(jdbcTemplate);
 	}
@@ -261,7 +267,8 @@ class TaskControllerTest {
 				.content("""
 						{"title": "새 할 일", "priority": "high"}
 						"""))
-			.andExpect(status().isBadRequest());
+			.andExpect(status().isBadRequest())
+			.andExpect(jsonPath("$.message").exists());
 
 		verifyNoInteractions(jdbcTemplate);
 	}
@@ -273,7 +280,8 @@ class TaskControllerTest {
 				.content("""
 						{"title": "   "}
 						"""))
-			.andExpect(status().isBadRequest());
+			.andExpect(status().isBadRequest())
+			.andExpect(jsonPath("$.message").value("제목을 입력하세요"));
 
 		verifyNoInteractions(jdbcTemplate);
 	}
@@ -342,7 +350,8 @@ class TaskControllerTest {
 				.content("""
 						{"priority": "URGENT"}
 						"""))
-			.andExpect(status().isBadRequest());
+			.andExpect(status().isBadRequest())
+			.andExpect(jsonPath("$.message").exists());
 
 		verifyNoInteractions(jdbcTemplate);
 	}
@@ -358,7 +367,8 @@ class TaskControllerTest {
 				.content("""
 						{"done": true}
 						"""))
-			.andExpect(status().isNotFound());
+			.andExpect(status().isNotFound())
+			.andExpect(jsonPath("$.message").value("할 일을 찾을 수 없습니다"));
 	}
 
 	@Test
@@ -368,7 +378,8 @@ class TaskControllerTest {
 				.content("""
 						{"title": "   "}
 						"""))
-			.andExpect(status().isBadRequest());
+			.andExpect(status().isBadRequest())
+			.andExpect(jsonPath("$.message").value("제목을 입력하세요"));
 
 		verifyNoInteractions(jdbcTemplate);
 	}
@@ -387,7 +398,18 @@ class TaskControllerTest {
 		given(jdbcTemplate.update(anyString(), eq(99L))).willReturn(0);
 
 		mockMvc.perform(delete("/api/tasks/99"))
-			.andExpect(status().isNotFound());
+			.andExpect(status().isNotFound())
+			.andExpect(jsonPath("$.message").value("할 일을 찾을 수 없습니다"));
+	}
+
+	@Test
+	void findAllReturnsServerErrorWhenDatabaseFails() throws Exception {
+		given(jdbcTemplate.query(anyString(), any(RowMapper.class), any(Object[].class)))
+			.willThrow(new DataAccessResourceFailureException("connection refused"));
+
+		mockMvc.perform(get("/api/tasks"))
+			.andExpect(status().isInternalServerError())
+			.andExpect(jsonPath("$.message").value("서버 오류가 발생했습니다"));
 	}
 
 }
