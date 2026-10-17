@@ -139,7 +139,7 @@ class TaskControllerTest {
 	void findAllReturnsBadRequestWhenPriorityIsLowerCase() throws Exception {
 		mockMvc.perform(get("/api/tasks").param("priority", "high"))
 			.andExpect(status().isBadRequest())
-			.andExpect(jsonPath("$.message").exists());
+			.andExpect(jsonPath("$.message").value("priority 값이 올바르지 않습니다"));
 
 		verifyNoInteractions(jdbcTemplate);
 	}
@@ -208,7 +208,7 @@ class TaskControllerTest {
 						{"title": "새 할 일", "dueDate": "2026/10/20"}
 						"""))
 			.andExpect(status().isBadRequest())
-			.andExpect(jsonPath("$.message").exists());
+			.andExpect(jsonPath("$.message").value("요청 본문 형식이 올바르지 않습니다"));
 
 		verifyNoInteractions(jdbcTemplate);
 	}
@@ -255,7 +255,7 @@ class TaskControllerTest {
 						{"title": "새 할 일", "priority": "URGENT"}
 						"""))
 			.andExpect(status().isBadRequest())
-			.andExpect(jsonPath("$.message").exists());
+			.andExpect(jsonPath("$.message").value("요청 본문 형식이 올바르지 않습니다"));
 
 		verifyNoInteractions(jdbcTemplate);
 	}
@@ -268,7 +268,7 @@ class TaskControllerTest {
 						{"title": "새 할 일", "priority": "high"}
 						"""))
 			.andExpect(status().isBadRequest())
-			.andExpect(jsonPath("$.message").exists());
+			.andExpect(jsonPath("$.message").value("요청 본문 형식이 올바르지 않습니다"));
 
 		verifyNoInteractions(jdbcTemplate);
 	}
@@ -351,7 +351,7 @@ class TaskControllerTest {
 						{"priority": "URGENT"}
 						"""))
 			.andExpect(status().isBadRequest())
-			.andExpect(jsonPath("$.message").exists());
+			.andExpect(jsonPath("$.message").value("요청 본문 형식이 올바르지 않습니다"));
 
 		verifyNoInteractions(jdbcTemplate);
 	}

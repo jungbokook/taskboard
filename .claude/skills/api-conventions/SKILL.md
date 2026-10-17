@@ -40,12 +40,14 @@ paths:
   - `ResponseStatusException`: `reason`을 그대로 쓴다.
   - 쿼리 파라미터 변환 실패: `"<파라미터명> 값이 올바르지 않습니다"`
   - JSON 본문 변환 실패: `"요청 본문 형식이 올바르지 않습니다"`
+  - 그 밖의 404(없는 경로 등): `"요청한 경로를 찾을 수 없습니다"`
+  - 그 밖의 Spring MVC 표준 예외(허용하지 않는 메서드 405 등): `"요청을 처리할 수 없습니다"`
   - 그 밖의 예외: 500과 `"서버 오류가 발생했습니다"`. 원인은 로그에 남긴다.
 
 ## 테스트에서 확인할 것
 
 - 상태 코드는 `status().isCreated()`, `isNoContent()`, `isBadRequest()`, `isNotFound()`처럼 정확히 검증한다.
-- 오류 응답은 `jsonPath("$.message")`를 검증한다. 컨트롤러가 직접 거부한 경우는 `.value("...")`로 문구까지, Spring 변환 실패는 `.exists()`로 확인한다.
+- 오류 응답은 `jsonPath("$.message").value("...")`로 문구까지 검증한다. Spring 변환 실패도 `ApiExceptionHandler`가 고정 문구를 쓰므로 `.exists()`가 아니라 `.value(...)`로 확인한다.
 - 400 테스트는 `verifyNoInteractions(jdbcTemplate)`로 DB에 접근하지 않았는지 확인한다.
 - 204 테스트는 `content().string("")`로 본문이 없는지 확인한다.
 - 404 테스트는 목 `JdbcTemplate`이 빈 목록이나 `0`을 돌려주게 해서 만든다.

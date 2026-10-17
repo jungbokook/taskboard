@@ -19,10 +19,15 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
 
 	private static final Logger log = LoggerFactory.getLogger(ApiExceptionHandler.class);
 
+	private static final String SERVER_ERROR_MESSAGE = "서버 오류가 발생했습니다";
+
 	// Spring MVC 표준 예외와 ResponseStatusException은 모두 여기를 거치므로 본문을 ApiError로 바꾼다.
 	@Override
 	protected ResponseEntity<Object> handleExceptionInternal(Exception ex, Object body, HttpHeaders headers,
 			HttpStatusCode statusCode, WebRequest request) {
+		if (statusCode.is5xxServerError()) {
+			log.error("서버 오류 응답", ex);
+		}
 		return super.handleExceptionInternal(ex, new ApiError(messageFor(ex, statusCode)), headers, statusCode,
 				request);
 	}
@@ -30,10 +35,13 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
 	@ExceptionHandler(Exception.class)
 	public ResponseEntity<ApiError> handleUnexpected(Exception ex) {
 		log.error("처리하지 못한 예외", ex);
-		return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiError("서버 오류가 발생했습니다"));
+		return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiError(SERVER_ERROR_MESSAGE));
 	}
 
 	private String messageFor(Exception ex, HttpStatusCode statusCode) {
+		if (statusCode.is5xxServerError()) {
+			return SERVER_ERROR_MESSAGE;
+		}
 		if (ex instanceof ResponseStatusException rse && rse.getReason() != null) {
 			return rse.getReason();
 		}
