@@ -39,17 +39,23 @@ function TaskForm({ onCreated }: TaskFormProps) {
   return (
     <>
       <form onSubmit={handleSubmit}>
+        <label htmlFor="task-form-title">제목</label>
         <input
+          id="task-form-title"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           placeholder="할 일 제목"
         />
+        <label htmlFor="task-form-due-date">마감일</label>
         <input
+          id="task-form-due-date"
           type="date"
           value={dueDate}
           onChange={(e) => setDueDate(e.target.value)}
         />
+        <label htmlFor="task-form-priority">우선순위</label>
         <select
+          id="task-form-priority"
           value={priority}
           onChange={(e) => setPriority(e.target.value as Priority)}
         >
