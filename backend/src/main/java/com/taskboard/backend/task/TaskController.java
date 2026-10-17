@@ -25,12 +25,13 @@ public class TaskController {
 
 	@GetMapping("/api/tasks")
 	public ResponseEntity<List<Task>> findAll(@RequestParam(required = false) String done,
-			@RequestParam(required = false) Priority priority) {
+			@RequestParam(required = false) Priority priority, @RequestParam(required = false) String q) {
 		if (done != null && !done.equals("true") && !done.equals("false")) {
 			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "done 값은 true 또는 false여야 합니다");
 		}
 		Boolean doneFilter = done == null ? null : Boolean.valueOf(done);
-		return ResponseEntity.ok(taskRepository.findAll(doneFilter, priority));
+		String keyword = q == null || q.isBlank() ? null : q.strip();
+		return ResponseEntity.ok(taskRepository.findAll(doneFilter, priority, keyword));
 	}
 
 	@PostMapping("/api/tasks")

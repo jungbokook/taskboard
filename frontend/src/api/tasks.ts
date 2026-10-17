@@ -28,6 +28,7 @@ export type UpdateTaskInput = {
 export type TaskQuery = {
   done?: boolean
   priority?: Priority
+  q?: string
 }
 
 export class ApiError extends Error {
@@ -63,6 +64,7 @@ export async function fetchTasks(query: TaskQuery = {}): Promise<Task[]> {
   const params = new URLSearchParams()
   if (query.done !== undefined) params.set('done', String(query.done))
   if (query.priority !== undefined) params.set('priority', query.priority)
+  if (query.q !== undefined) params.set('q', query.q)
   const qs = params.toString()
   const res = await checkOk(await fetch(qs === '' ? '/api/tasks' : `/api/tasks?${qs}`))
   return res.json()
