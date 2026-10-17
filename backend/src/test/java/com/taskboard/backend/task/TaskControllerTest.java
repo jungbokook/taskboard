@@ -1,6 +1,7 @@
 package com.taskboard.backend.task;
 
 import static org.hamcrest.Matchers.nullValue;
+import static org.mockito.AdditionalMatchers.not;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.contains;
@@ -115,6 +116,76 @@ class TaskControllerTest {
 			.andExpect(jsonPath("$[0].id").value(3))
 			.andExpect(jsonPath("$[0].done").value(false))
 			.andExpect(jsonPath("$[0].priority").value("LOW"));
+	}
+
+	@Test
+	void findAllFiltersByQuery() throws Exception {
+		Task task = new Task(4L, "주간 보고서 작성", null, false, OffsetDateTime.parse("2026-10-16T12:00:00+09:00"), null,
+				Priority.MEDIUM);
+		given(jdbcTemplate.query(contains("where title ilike ?"), any(RowMapper.class), eq("%보고서%")))
+			.willReturn(List.of(task));
+
+		mockMvc.perform(get("/api/tasks").param("q", "보고서"))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.length()").value(1))
+			.andExpect(jsonPath("$[0].id").value(4))
+			.andExpect(jsonPath("$[0].title").value("주간 보고서 작성"));
+	}
+
+	@Test
+	void findAllTrimsQuery() throws Exception {
+		Task task = new Task(4L, "주간 보고서 작성", null, false, OffsetDateTime.parse("2026-10-16T12:00:00+09:00"), null,
+				Priority.MEDIUM);
+		given(jdbcTemplate.query(contains("where title ilike ?"), any(RowMapper.class), eq("%보고서%")))
+			.willReturn(List.of(task));
+
+		mockMvc.perform(get("/api/tasks").param("q", "  보고서  "))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.length()").value(1))
+			.andExpect(jsonPath("$[0].id").value(4));
+	}
+
+	@Test
+	void findAllIgnoresBlankQuery() throws Exception {
+		List<Task> tasks = List.of(
+				new Task(1L, "첫 할 일", null, false, OffsetDateTime.parse("2026-10-16T09:00:00+09:00"), null,
+						Priority.HIGH),
+				new Task(2L, "두 번째 할 일", null, true, OffsetDateTime.parse("2026-10-16T10:00:00+09:00"), null,
+						Priority.MEDIUM));
+		given(jdbcTemplate.query(not(contains("where")), any(RowMapper.class), any(Object[].class))).willReturn(tasks);
+
+		mockMvc.perform(get("/api/tasks").param("q", "   "))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.length()").value(2));
+	}
+
+	@Test
+	void findAllFiltersByDoneAndPriorityAndQuery() throws Exception {
+		Task task = new Task(5L, "분기 보고서 검토", null, false, OffsetDateTime.parse("2026-10-16T13:00:00+09:00"), null,
+				Priority.LOW);
+		given(jdbcTemplate.query(contains("where done = ? and priority = ? and title ilike ?"), any(RowMapper.class),
+				eq(false), eq("LOW"), eq("%보고서%")))
+			.willReturn(List.of(task));
+
+		mockMvc.perform(get("/api/tasks").param("done", "false").param("priority", "LOW").param("q", "보고서"))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.length()").value(1))
+			.andExpect(jsonPath("$[0].id").value(5))
+			.andExpect(jsonPath("$[0].done").value(false))
+			.andExpect(jsonPath("$[0].priority").value("LOW"));
+	}
+
+	@Test
+	void findAllEscapesWildcardsInQuery() throws Exception {
+		Task task = new Task(6L, "진행률 50%_달성", null, false, OffsetDateTime.parse("2026-10-16T14:00:00+09:00"), null,
+				Priority.MEDIUM);
+		given(jdbcTemplate.query(contains("where title ilike ?"), any(RowMapper.class), eq("%50\\%\\_%")))
+			.willReturn(List.of(task));
+
+		mockMvc.perform(get("/api/tasks").param("q", "50%_"))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.length()").value(1))
+			.andExpect(jsonPath("$[0].id").value(6));
 	}
 
 	@Test

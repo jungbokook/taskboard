@@ -28,7 +28,7 @@ public class TaskRepository {
 		this.jdbcTemplate = jdbcTemplate;
 	}
 
-	public List<Task> findAll(Boolean done, Priority priority) {
+	public List<Task> findAll(Boolean done, Priority priority, String q) {
 		List<String> conditions = new ArrayList<>();
 		List<Object> args = new ArrayList<>();
 		if (done != null) {
@@ -38,6 +38,10 @@ public class TaskRepository {
 		if (priority != null) {
 			conditions.add("priority = ?");
 			args.add(priority.name());
+		}
+		if (q != null) {
+			conditions.add("title ilike ?");
+			args.add("%" + q.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%");
 		}
 		String where = conditions.isEmpty() ? "" : " where " + String.join(" and ", conditions);
 		return jdbcTemplate.query(
