@@ -3,6 +3,7 @@ import { errorMessage, fetchTasks, type Task, type TaskQuery } from './api/tasks
 import TaskFilter from './components/TaskFilter'
 import TaskForm from './components/TaskForm'
 import TaskList from './components/TaskList'
+import ThemeToggle from './components/ThemeToggle'
 
 function App() {
   const [status, setStatus] = useState<string | null>(null)
@@ -70,7 +71,10 @@ function App() {
       <p>{status ?? '확인 중...'}</p>
       {database && <p>{database}</p>}
       <TaskForm onCreated={handleCreated} />
-      <TaskFilter query={query} onChange={handleQueryChange} />
+      <div className="toolbar">
+        <TaskFilter query={query} onChange={handleQueryChange} />
+        <ThemeToggle />
+      </div>
       <TaskList
         tasks={tasks}
         loadError={loadError}
